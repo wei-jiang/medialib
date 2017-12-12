@@ -1,0 +1,65 @@
+<div class="HolyGrail">
+    <header>
+        <img src="/assets/logo.png">
+        <button class="btn btn-default logout" v-on:click.prevent="logout()">
+             注销
+        </button>
+    </header>
+    <!--<h1 v-on:click.prevent="newSubscription">{{ message }}</h1>
+    <button v-on:click.prevent="nav2bar">goto bar</button>
+    <div id='test'></div>-->
+    <div class="HolyGrail-body">
+        <nav class="HolyGrail-nav">
+            <button v-for="t in types" v-bind:class="t.active?'btn btn-primary':'btn btn-default'" v-on:click.prevent="sel_type(t)">
+                    {{t.name}}
+            </button>
+        </nav>
+        <div class="HolyGrail-content">
+            <div v-for="ssm in wanted">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <div>
+                            <h3 v-if="ssm.peer && ssm.ssm_enabled" class="panel-title">状态:{{ssm.ssm_enabled==0?"停止服务":"正常服务"}}</h3>
+                            <h3 class="panel-title">类型:{{ssm.type}}</h3>
+                            <h3 class="panel-title">设备id:{{ssm.dev_id}}</h3>
+                            <h3 class="panel-title">设备ip:{{ssm.my_ip}}</h3>
+                            <h3 class="panel-title">设备位置:{{ssm.dev_loc}}</h3>
+                            <h3 class="panel-title">联系电话:{{ssm.cphone}}</h3>
+                            <h3 class="panel-title">所在城市:{{ssm.city}}</h3>
+                            <h3 class="panel-title">当前版本:{{ssm.version}}</h3>
+                            <h3 v-if="ssm.peer && ssm.pendingVersion" class="panel-title" style="background-color:green;color:gold;">最新版本:{{ssm.pendingVersion}}</h3>
+                            <h3 v-if="ssm.peer && ssm.duration" class="panel-title">{{ssm.duration}}</h3>
+                        </div>
+                        <div v-if="ssm.peer && ssm.printer_state">
+                            <h3 class="panel-title">打印机状态:{{ssm.printer_state}}</h3>
+                            <h3 v-if="ssm.printer_mileage" class="panel-title">里程数:{{ssm.printer_mileage}}厘米</h3>
+                            <h3 v-if="ssm.printer_cut_cnt" class="panel-title">切刀数:{{ssm.printer_cut_cnt}}刀</h3>
+                        </div>
+                    </div>
+                    <div class="panel-body">
+                        <video v-bind:id="ssm.ssm_hash" autoplay></video>
+                        <video v-bind:id="ssm.ssm_hash + '_dsk'" autoplay></video>
+                    </div>
+                    <div class="panel-footer">
+                        <button v-on:click.prevent="get_log(ssm, 2)" type="button" class="btn btn-info">获取今日log</button>
+                        <button v-on:click.prevent="get_log(ssm, 1)" type="button" class="btn btn-success">获取全部log</button>
+                        <button v-on:click.prevent="toggle_video(ssm, $event.target)" class="btn btn-primary">{{ ssm.peer?'关闭连接':'建立连接'}}</button>
+                        <button v-if="ssm.peer && ssm.type=='新自助机'" v-on:click.prevent="req_dsk(ssm)" class="btn btn-warning">
+                            {{ ssm.dsk_stream?'关闭远程桌面':'开启远程桌面'}}
+                        </button>
+                        <button v-if="ssm.peer && ssm.pendingVersion" v-on:click.prevent="update_ssm(ssm)" class="btn btn-danger">升级并重启</button>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    <footer class="well">
+        <div>
+            智慧旅游网络科技有限公司2015-2017
+        </div>
+        <div id='summay'>
+            {{summary}}
+        </div>
+    </footer>
+</div>

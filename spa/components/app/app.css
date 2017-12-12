@@ -1,0 +1,44 @@
+
+video {
+    display: none;
+}
+.panel-heading {
+    display: flex;
+    flex-direction: row;
+    justify-content:space-around;
+}
+.HolyGrail {
+  display: flex;
+  min-height: 100vh;
+  flex-direction: column;
+}
+
+.HolyGrail-content {
+    display: flex; 
+    flex-wrap: wrap;
+    flex: 1;
+    /*justify-content:space-around;*/
+}
+
+.HolyGrail-nav {
+    display: flex;
+    flex-direction: column;
+    order: -1;
+    flex: 0 0 12em;
+}
+.HolyGrail-body {
+    display: flex;
+    flex-direction: row;
+    flex: 1;
+}
+
+header, footer {
+    display: flex;
+    flex-direction: row;
+}
+#summay {
+    margin-left: auto;
+}
+.logout {
+    margin-left: auto;
+}
