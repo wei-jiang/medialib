@@ -63,9 +63,10 @@ server.listen(app.get('port')
         console.log("Express server listening on port " + app.get('port'));
     }
 );
-app.get('/video', function (req, res) {
+app.get('/media', function (req, res) {
     let fid = req.query.id;
-    // console.log('/video?id='+fid)
+    if(!fid) return res.end('file no found');
+    // console.log('/media?id='+fid)
     fid = new ObjectId(fid);
     mdb.collection('fs.files').findOne({ "_id": fid })
         .then(fi => {
@@ -142,24 +143,36 @@ io.on('connection', function (socket) {
             })
             .on('finish', function () {
                 console.log('upload_file done!');
+                socket.emit('refresh_file_list','')
+                socket.broadcast.emit('refresh_file_list','')
             });
     });
     socket.on('drop_all_files', function (data) {
         bucket.drop().then(() => {
             console.log('deleted all files in mongodb')
+            socket.emit('refresh_file_list','')
+            socket.broadcast.emit('refresh_file_list','')
         });
-        socket.emit('refresh_file_list','')
-        socket.broadcast.emit('refresh_file_list','')
+        
     });
     socket.on('delete_file_by_id', function (data) {
-        bucket.delete(data.id).then(() => {
+        bucket.delete( new ObjectId(data.id) ).then(() => {
             console.log(`deleted file of ${data.id}`)
-        });
-        socket.emit('refresh_file_list','')
-        socket.broadcast.emit('refresh_file_list','')
+            socket.emit('refresh_file_list','')
+            socket.broadcast.emit('refresh_file_list','')
+        });        
     });
     socket.on('get_file_list_by_type', function (data, cb) {
-        let chunksQuery = mdb.collection(FILES_COLL).find({ contentType: data.type });
+        let cond = { contentType: data.type };
+        if( _.isArray(data.type) ){
+            cond = _.map(data.type, t=>{
+                return {
+                    contentType: t
+                }
+            })
+            cond = {$or:cond}
+        }
+        let chunksQuery = mdb.collection(FILES_COLL).find(cond);
         chunksQuery.toArray()
         .then(files=>{
             // console.log(files)
