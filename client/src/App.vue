@@ -1,7 +1,10 @@
 <template>
-  <div id="app">    
+  <v-app light>    
     <router-view/>
-  </div>
+    <v-footer :fixed="fixed" app>
+      <span>&copy; 2017</span>
+    </v-footer>
+  </v-app>
 </template>
 
 <script>
@@ -11,11 +14,9 @@ export default {
 </script>
 
 <style>
-#app {
-  /* font-family: 'Avenir', Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50; */
-}
+  html, body{
+    margin: 0px;
+    padding: 0px;
+    overflow: hidden;
+  }
 </style>

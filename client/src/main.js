@@ -3,7 +3,7 @@
 import Vue from 'vue'
 import Vuetify from 'vuetify'
 import 'vuetify/dist/vuetify.min.css';
-import 'noty/lib/noty.css'
+// import 'noty/lib/noty.css'
 
 import App from './App'
 import router from './router'

@@ -7,13 +7,20 @@
     </header>
     <div class="HolyGrail-body">
         <nav class="left-nav">
-
+          <v-toolbar color="light-blue" dark>
+            <v-toolbar-title>在线自助机</v-toolbar-title>
+            <v-spacer></v-spacer>
+          </v-toolbar>
         </nav>
         <div class="HolyGrail-content" @dragover.prevent @drop="drop($event)">
-          <video v-if="sel_id" id="video_player" controls="controls" autoplay="autoplay" loop="loop" width="100%" height="100%">
+          <video v-if="sel_video_id" id="video_player" 
+            controls="controls" autoplay="autoplay" loop="loop" width="100%"
+            >
             <source :src="sel_url" type="video/mp4" />
           </video>
-          <div class="imgGallery"></div>
+          <v-carousel v-if="carousel" :interval="4000">
+            <v-carousel-item v-for="(item,i) in sel_pics" v-bind:src="item.src" :key="i"></v-carousel-item>
+          </v-carousel>
         </div>
         <nav class="right-nav">
           <v-tabs v-model="active">
@@ -29,8 +36,8 @@
               <v-tabs-slider color="yellow"></v-tabs-slider>
             </v-tabs-bar>
             <v-tabs-items>
-              <v-tabs-content key="视频" id="视频" style="overflow:auto;">
-                <v-card flat>
+              <v-tabs-content key="视频" id="视频" class="media-list">
+       
                   <div v-for="v in videos">
                     <div class="video_info" draggable="true" @dragstart="drag(v, $event)">
                       <video preload="metadata" width="100%">
@@ -45,23 +52,27 @@
                   <input type="file" @change="processFile($event)">
                   <v-progress-circular 
                     v-if="load_progress"
-                    v-bind:size="100"
-                    v-bind:width="15"
+                    v-bind:size="150"
+                    v-bind:width="30"
                     v-bind:rotate="-90"
                     v-bind:value="load_progress"
                     color="teal"
                   >
                     {{ load_progress + '%'}}
                   </v-progress-circular>
-                  <button v-on:click="upload_video()" class="btn btn-primary">上传视频(mp4)</button>
-                  <button v-on:click="clear_all_video()" class="btn btn-primary">清除所有视频</button>
-                </v-card>
+                  <button v-on:click.prevent="upload_video()" class="btn btn-primary">上传视频(mp4)</button>
+                  <button v-on:click.prevent="clear_all_video()" class="btn btn-primary">清除所有视频</button>
+ 
               </v-tabs-content>
-              <v-tabs-content key="图片" id="图片" >
+              <v-tabs-content key="图片" id="图片" class="media-list" >
                 <v-card flat draggable="true" @dragstart="drag_pics($event)">
                   <div v-for="p in pictures">
                     <div class="video_info">
-                      <input type="checkbox" v-model="p.sel">
+                      <v-checkbox
+                        v-bind:label="`选择后拖拽至左侧播放窗口(${p.sel?'已选择':'未选择'})`"
+                        v-model="p.sel"
+                        :color="'primary'"
+                      ></v-checkbox>
                       <img :src="`/media?id=${p._id}`" width="100%"/>  
                       <div>名称：{{p.filename}}</div>
                       <div>大小：{{formatFileSize(p.length)}}</div>
@@ -69,7 +80,6 @@
                       <button class="btn fit-parent negative" @click="delete_item(p)" >删除</button>
                     </div>
                   </div>
-                  <input type="file" @change="processFile($event)">
                   <v-progress-circular 
                     v-if="load_progress"
                     v-bind:size="100"
@@ -80,8 +90,8 @@
                   >
                     {{ load_progress + '%'}}
                   </v-progress-circular>
-                  <button v-on:click="upload_picture()" class="btn btn-primary">上传图片</button>
-                  <button v-on:click="clear_all_pic()" class="btn btn-primary">清除所有图片</button>
+                  <button v-on:click.prevent="upload_picture()" class="btn btn-primary">上传图片</button>
+                  <button v-on:click.prevent="clear_all_pic()" class="btn btn-primary">清除所有图片</button>
                 </v-card>
               </v-tabs-content>
             </v-tabs-items>
@@ -89,22 +99,18 @@
             
         </nav>
     </div>
-    <footer class="well">
-        <div>
-            智慧旅游网络科技有限公司2015-2017
-        </div>
-        <div id='summay'>
-
-        </div>
-    </footer>
+    
 </div>
 </template>
 
 <script>
 import moment from "moment";
 import Noty from "noty";
-import _ from 'lodash'
-require("imports-loader?$=jquery!jr3dcarousel/src/jR3DCarousel.js");
+import _ from "lodash";
+// import $ from 'jquery';
+// require("imports-loader?window.jQuery=jquery!jr3dcarousel/src/jR3DCarousel.js")
+// import 'script-loader!jr3dcarousel/src/jR3DCarousel.js'
+
 import net from "../net";
 
 export default {
@@ -121,7 +127,9 @@ export default {
     return {
       videos: [],
       pictures: [],
-      sel_id: "",
+      sel_video_id: "",
+      carousel: false,
+      sel_pics:[],
       load_progress: 0,
       tabs: ["视频", "图片"],
       active: null
@@ -129,33 +137,31 @@ export default {
   },
   computed: {
     sel_url() {
-      return `/media?id=${this.sel_id}`;
+      return `/media?id=${this.sel_video_id}`;
     }
   },
   mounted() {
     this.get_files_info();
   },
   methods: {
-    upload_picture(){
-      this.upload_video()
+    upload_picture() {
+      this.upload_video();
     },
-    clear_all_pic(){
-
-    },
-    drag_pics(e){
-      let sel_imgs = _.filter(this.pictures, 'sel');
-      sel_imgs = _.map(sel_imgs, i=>{
+    clear_all_pic() {},
+    drag_pics(e) {
+      let sel_imgs = _.filter(this.pictures, "sel");
+      sel_imgs = _.map(sel_imgs, i => {
         return {
           id: i._id,
           contentType: i.contentType
-        }
-      })
-      console.log(sel_imgs)
+        };
+      });
+      // console.log(sel_imgs);
       e.dataTransfer.setData(
         "selected_media",
         JSON.stringify({
-          type: 'picture',
-          data:sel_imgs
+          type: "picture",
+          data: sel_imgs
         })
       );
     },
@@ -175,8 +181,8 @@ export default {
       e.dataTransfer.setData(
         "selected_media",
         JSON.stringify({
-          type: 'video',
-          data:{
+          type: "video",
+          data: {
             id: v._id,
             contentType: v.contentType
           }
@@ -187,34 +193,46 @@ export default {
       // console.log('Looks like you dropped something!', e);
       let m = e.dataTransfer.getData("selected_media");
       m = JSON.parse(m);
-      if(m.type == 'video'){
-        this.sel_id = m.data.id;
+      this.carousel = false
+      if (m.type == "video") {
+        this.sel_video_id = m.data.id;
         this.$nextTick(() => {
           $("#video_player")[0].load();
         });
-      } else{
-
+      } else {
+        this.sel_video_id = "";
+        if( 0 === _.size( m.data) ) {
+          return alert('未选择图片')
+        }        
+        this.sel_pics = _.map(m.data, i=>{
+          return {"src":`/media?id=${i.id}`}
+        })
+        this.$nextTick(() => (this.carousel = true))
+        // console.log(this.sel_pics)
       }
-      
     },
     delete_item(f) {
-      net.sock.emit("delete_file_by_id", { id: f._id } )      
+      net.sock.emit("delete_file_by_id", { id: f._id });
     },
     get_files_info() {
       net.sock.emit("get_file_list_by_type", { type: "video/mp4" }, files => {
         // console.log(files)
         this.videos = files;
       });
-      this.get_imgs()
+      this.get_imgs();
     },
     get_imgs() {
-      net.sock.emit("get_file_list_by_type", { type: ["image/png", "image/jpeg", "image/bmp"] }, files => {
-        // console.log(files)
-        this.pictures = _.map(files, i=>{
-          i.sel = false;
-          return i;
-        });
-      });
+      net.sock.emit(
+        "get_file_list_by_type",
+        { type: ["image/png", "image/jpeg", "image/bmp"] },
+        files => {
+          // console.log(files)
+          this.pictures = _.map(files, i => {
+            i.sel = false;
+            return i;
+          });
+        }
+      );
     },
     clear_all_video() {
       net.sock.emit("drop_all_files", "");
@@ -233,8 +251,8 @@ export default {
       let valid = allow_file_types.indexOf(ext) > -1;
       if (!valid) {
         let n = new Noty({
-          text: '文件格式错误，只能上传媒体文件。',
-          layout: 'center',
+          text: "文件格式错误，只能上传媒体文件。",
+          layout: "center",
           buttons: [
             Noty.button("确定", "blue lighten-1", function() {
               console.log("button 2 clicked");
@@ -265,13 +283,14 @@ export default {
 
 .HolyGrail {
   display: flex;
-  min-height: 100vh;
+  min-height: 92vh;
   flex-direction: column;
 }
 
 .HolyGrail-content {
-  display: flex;
-  flex-wrap: wrap;
+  min-width: 60%;
+  /* display: flex;
+  flex-wrap: wrap; */
   flex: 1;
   /*justify-content:space-around;*/
 }
@@ -279,12 +298,11 @@ export default {
 .left-nav,
 .right-nav {
   display: flex;
-  overflow: auto;
   flex-direction: column;
   /* order: -1;*/
-  flex: 0 0 12em;
+  /* flex: 0 0 12em; */
   min-width: 20%;
-  justify-content: center;
+  /* justify-content: center; */
 }
 .right-nav {
   margin-left: auto;
@@ -308,5 +326,9 @@ footer {
 }
 input[type="file"] {
   display: none;
+}
+.media-list{
+  overflow:auto; 
+  max-height:85vh;
 }
 </style>
