@@ -6,8 +6,18 @@ class Net {
   constructor() {
     if (typeof io != "undefined") {
       this.sock = io();
+      // this.rtc_sock = io('/rtc');
       this.sock.on('connect', this.on_connect.bind(this));
       this.sock.on('refresh_file_list', this.on_refresh_file_list.bind(this));
+      ////////////////////////////////
+      this.rtc_sock.on('connect', this.on_rtc_connect.bind(this));
+      this.rtc_sock.on('disconnect', () => {
+        console.log("disconnect to rtc server");
+        this.rtc_sock.removeAllListeners();
+      });
+      this.rtc_sock.on('ssms_all_yours', (data) => {
+        vm.$emit('set_ssms', data);
+      });
     }
   }
   register_ui_evt() {
@@ -19,7 +29,10 @@ class Net {
   on_connect() {
     // this.register_ui_evt()
   }
-
+  on_rtc_connect() {
+    console.log('on_rtc_connect')
+    this.rtc_sock.emit('supervisor_online', 'freego');
+  }
   on_refresh_file_list(data) {
     vm.$emit('refresh_file_list', '');
   }
@@ -45,7 +58,7 @@ class Net {
       // console.log(progress + "%");
       // -> e.g. '42%'
     });
-    
+
     blobStream.pipe(stream);
   }
 }

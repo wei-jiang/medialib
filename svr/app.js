@@ -26,7 +26,7 @@ const socketioJwt = require("socketio-jwt");
 const expressJwt = require('express-jwt');
 const credential = require('./secret')
 
-app.set('port', process.env.PORT || 7900);
+app.set('port', process.env.PORT || 7901);
 
 nunjucks.configure('views', {
     autoescape: true,
@@ -44,15 +44,13 @@ app.use(bodyParser.urlencoded({     // to support URL-encoded bodies
     extended: true
 }));
 
-const uri = 'mongodb://localhost:27017';
-const dbName = 'test';
 
 let mdb = null, bucket;
 let CHUNKS_COLL = 'fs.chunks';
 let FILES_COLL = 'fs.files';
-mongodb.MongoClient.connect(uri, function (error, client) {
+mongodb.MongoClient.connect(credential.db_url, function (error, client) {
     assert.ifError(error);
-    const db = client.db(dbName);
+    const db = client.db(credential.db_name);
     mdb = db;
     bucket = new mongodb.GridFSBucket(db);
 
@@ -82,7 +80,7 @@ app.get('/media', function (req, res) {
 function stream_media(req, res, fi) {
     if (req.headers['range']) {
         // Range request, partialle stream the file
-        console.log('Range Reuqest');
+        // console.log('Range Reuqest');
         var parts = req.headers['range'].replace(/bytes=/, "").split("-");
         var partialstart = parts[0];
         var partialend = parts[1];
@@ -90,7 +88,7 @@ function stream_media(req, res, fi) {
         var start = parseInt(partialstart, 10);
         var end = partialend ? parseInt(partialend, 10) : fi.length - 1;
         var chunksize = (end - start) + 1;
-        console.log('Range ', start, '-', end);
+        // console.log('Range ', start, '-', end);
         res.writeHead(206, {
             'Content-Range': 'bytes ' + start + '-' + end + '/' + fi.length,
             'Accept-Ranges': 'bytes',
@@ -112,7 +110,7 @@ function stream_media(req, res, fi) {
     } else {
 
         // stream back whole file
-        console.log('No Range Request');
+        // console.log('No Range Request');
         res.header('Content-Type', fi.contentType);
         res.header('Content-Length', fi.length);
         bucket.openDownloadStream(fi._id)

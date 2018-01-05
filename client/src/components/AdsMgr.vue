@@ -122,9 +122,14 @@ export default {
     this.$root.$on("on_load_progress", data => {
       this.load_progress = data > 0 && data < 100 ? data : 0;
     });
+    this.$root.$on("set_ssms", data => {
+      console.log(data)
+      this.ssms = data
+    });
   },
   data() {
     return {
+      ssms:[],
       videos: [],
       pictures: [],
       sel_video_id: "",
