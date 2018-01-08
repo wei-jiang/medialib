@@ -48,10 +48,11 @@ function sig_rtc(io) {
             data.ssm_hash = sk;
             ssms[sk] = data;
             // console.log(data);
-            socket.to('supervisor').emit('ssms_all_yours', ssms);
+            console.log( _.values(ssms) )
+            socket.to('supervisor').emit('ssms_all_yours', _.values(ssms) );
             socket.on('disconnect', () => {
                 delete ssms[sk];
-                socket.to('supervisor').emit('ssms_all_yours', ssms);
+                socket.to('supervisor').emit('ssms_all_yours', _.values(ssms) );
             });
         });
     });

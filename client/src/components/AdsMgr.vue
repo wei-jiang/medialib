@@ -11,6 +11,15 @@
             <v-toolbar-title>在线自助机</v-toolbar-title>
             <v-spacer></v-spacer>
           </v-toolbar>
+          <div style="display:flex;flex-direction: column;">
+            <div v-for="s in ssms">
+              {{s.dev_id}}<br>
+              {{s.dev_loc}}<br>
+              {{s.cphone}}<br>
+              {{s.version}}<br>
+              {{s.my_mac}}<br>
+            </div>
+          </div>
         </nav>
         <div class="HolyGrail-content" @dragover.prevent @drop="drop($event)">
           <video v-if="sel_video_id" id="video_player" 

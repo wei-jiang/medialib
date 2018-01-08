@@ -5,11 +5,11 @@ import ss from "socket.io-stream";
 class Net {
   constructor() {
     if (typeof io != "undefined") {
-      this.sock = io();
-      // this.rtc_sock = io('/rtc');
+      this.sock = io();      
       this.sock.on('connect', this.on_connect.bind(this));
       this.sock.on('refresh_file_list', this.on_refresh_file_list.bind(this));
       ////////////////////////////////
+      this.rtc_sock = io('/rtc');
       this.rtc_sock.on('connect', this.on_rtc_connect.bind(this));
       this.rtc_sock.on('disconnect', () => {
         console.log("disconnect to rtc server");
