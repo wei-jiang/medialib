@@ -12,12 +12,32 @@
             <v-spacer></v-spacer>
           </v-toolbar>
           <div style="display:flex;flex-direction: column;">
-            <div v-for="s in ssms">
-              {{s.dev_id}}<br>
-              {{s.dev_loc}}<br>
-              {{s.cphone}}<br>
-              {{s.version}}<br>
-              {{s.my_mac}}<br>
+            <div v-for="s in ssms" class="ssm" >
+              <div>
+                <div>设备id:</div><div>{{s.dev_id}}</div>
+              </div>
+              <div>
+                <div>所在位置:</div><div>{{s.dev_loc}}</div>
+              </div>
+              <div>
+                <div>联系电话:</div><div>{{s.cphone}}</div>
+              </div>
+              <div>
+                <div>版本号:</div><div>{{s.version}}</div>
+              </div>
+              <div>
+                <div>MAC地址:</div><div>{{s.my_mac}}</div>
+              </div>
+              <div>
+                <v-checkbox
+                  v-bind:label="`更改视频/图片`"
+                  v-model="s.selected"
+                  :color="'primary'"
+                ></v-checkbox>                
+                <v-btn color="success" v-on:click.prevent="toggle_peer(s)" >
+                    {{ s.peer?'关闭连接':'建立连接'}}
+                </v-btn>
+              </div>
             </div>
           </div>
         </nav>
@@ -30,6 +50,8 @@
           <v-carousel v-if="carousel" :interval="4000">
             <v-carousel-item v-for="(item,i) in sel_pics" v-bind:src="item.src" :key="i"></v-carousel-item>
           </v-carousel>
+          <!-- remote desktop stream divider -->
+          <video id='remote_desk' autoplay></video>
         </div>
         <nav class="right-nav">
           <v-tabs v-model="active">
@@ -132,18 +154,22 @@ export default {
       this.load_progress = data > 0 && data < 100 ? data : 0;
     });
     this.$root.$on("set_ssms", data => {
-      console.log(data)
-      this.ssms = data
+      // console.log(data)
+      this.ssms = _.map(data, s => {
+        s.peer = null;
+        s.selected = false;
+        return s;
+      });
     });
   },
   data() {
     return {
-      ssms:[],
+      ssms: [],
       videos: [],
       pictures: [],
       sel_video_id: "",
       carousel: false,
-      sel_pics:[],
+      sel_pics: [],
       load_progress: 0,
       tabs: ["视频", "图片"],
       active: null
@@ -158,6 +184,22 @@ export default {
     this.get_files_info();
   },
   methods: {
+    cur_base_url() {
+      let url = `${window.location.protocol}//${window.location.hostname}`;
+      if (window.location.port) url = `${url}:${window.location.port}`;
+      console.log("current base url = " + url);
+      return url;
+    },
+    toggle_peer(ssm) {
+      if (ssm.peer) {
+        ssm.peer.destroy();
+        ssm.peer = null;
+        return;
+      }
+      net.new_ssm_peer(ssm, stream => {
+        $("#remote_desk").attr("src", window.URL.createObjectURL(stream));
+      });
+    },
     upload_picture() {
       this.upload_video();
     },
@@ -190,6 +232,23 @@ export default {
         i = Math.floor(Math.log(bytes) / Math.log(k));
       return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + " " + sizes[i];
     },
+    set_ssm_ads(type, content) {
+      //cur_base_url()
+      let data =
+        type == "video"
+          ? {
+              type,
+              video: this.cur_base_url() + this.sel_url
+            }
+          : {type, images: content};
+      _.each(this.ssms, s => {
+        if (s.selected) {
+          data.ssm_sock_id = s.ssm_sock_id;
+          // console.log('emit change_ads', data)
+          net.rtc_emit("change_ads", data);
+        }
+      });
+    },
     drag(v, e) {
       // console.log('drag started', v, e);
       e.dataTransfer.setData(
@@ -207,22 +266,24 @@ export default {
       // console.log('Looks like you dropped something!', e);
       let m = e.dataTransfer.getData("selected_media");
       m = JSON.parse(m);
-      this.carousel = false
+      this.carousel = false;
       if (m.type == "video") {
         this.sel_video_id = m.data.id;
         this.$nextTick(() => {
           $("#video_player")[0].load();
         });
+        this.set_ssm_ads("video", "");
       } else {
         this.sel_video_id = "";
-        if( 0 === _.size( m.data) ) {
-          return alert('未选择图片')
-        }        
-        this.sel_pics = _.map(m.data, i=>{
-          return {"src":`/media?id=${i.id}`}
-        })
-        this.$nextTick(() => (this.carousel = true))
+        if (0 === _.size(m.data)) {
+          return alert("未选择图片");
+        }
+        this.sel_pics = _.map(m.data, i => {
+          return { src: `/media?id=${i.id}` };
+        });
+        this.$nextTick(() => (this.carousel = true));
         // console.log(this.sel_pics)
+        this.set_ssm_ads("image", _.map(m.data, i => `${this.cur_base_url()}/media?id=${i.id}` ) );
       }
     },
     delete_item(f) {
@@ -284,6 +345,14 @@ export default {
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
+.ssm {
+  display: flex;
+  flex-direction: column;
+}
+.ssm > div {
+  display: flex;
+  flex-direction: row;
+}
 .video_info {
   display: flex;
   flex-direction: column;
@@ -341,8 +410,8 @@ footer {
 input[type="file"] {
   display: none;
 }
-.media-list{
-  overflow:auto; 
-  max-height:85vh;
+.media-list {
+  overflow: auto;
+  max-height: 85vh;
 }
 </style>
