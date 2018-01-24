@@ -1,13 +1,14 @@
 const request = require('request');
 const querystring = require('querystring');
 const crypto = require('crypto')
-const md5_hash = crypto.createHash('md5');
+
 const moment = require('moment');
 const _ = require('lodash');
 const uuidv1 = require('uuid/v1');
 const uuidv4 = require('uuid/v4');
 
 function hash_str(str){
+    const md5_hash = crypto.createHash('md5');
     return md5_hash.update(str, 'utf8').digest('hex');
 }
 let ssms = {};

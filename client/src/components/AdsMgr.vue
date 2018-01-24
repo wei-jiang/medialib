@@ -51,7 +51,7 @@
             <v-carousel-item v-for="(item,i) in sel_pics" v-bind:src="item.src" :key="i"></v-carousel-item>
           </v-carousel>
           <!-- remote desktop stream divider -->
-          <video id='remote_desk' autoplay></video>
+          <video id='remote_desk' autoplay width="100%"></video>
         </div>
         <nav class="right-nav">
           <v-tabs v-model="active">
@@ -146,6 +146,9 @@ import net from "../net";
 
 export default {
   name: "AdsMgr",
+  beforeRouteEnter(to, from, next) {
+    sessionStorage.getItem("usr_token") ? next() : next("/login");
+  },
   created: function() {
     this.$root.$on("refresh_file_list", data => {
       this.get_files_info();
@@ -371,6 +374,7 @@ export default {
 }
 
 .HolyGrail-content {
+  overflow: auto;
   min-width: 60%;
   /* display: flex;
   flex-wrap: wrap; */

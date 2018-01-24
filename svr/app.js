@@ -128,6 +128,7 @@ function stream_media(req, res, fi) {
 //   secret: 'freego_20170406',
 //   handshake: true
 // }));
+const util = require('./common/util')
 const sig_rtc = require('./dealers/rtc_sig')
 sig_rtc(io)
 io.on('connection', function (socket) {
@@ -175,6 +176,16 @@ io.on('connection', function (socket) {
         .then(files=>{
             // console.log(files)
             cb(files)
+        })
+    });
+    socket.on('verify_user', (usr_token, cb) => {
+        // console.log('client_uuid', usr_token)
+        util.verify_token(usr_token, (err, decoded) => {
+            if (err) {
+                cb({ ret: -1, err })
+            } else {
+                cb({ ret: 0, user: decoded })
+            }
         })
     });
 });

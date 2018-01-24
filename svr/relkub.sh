@@ -11,8 +11,8 @@ cd /data/apps/media
 tar zxvf ./media.tar.gz -C .
 npm i
 #node app.js
-#forever stop app.js
-#forever start app.js
+forever stop app.js
+forever start app.js
 END
 )
 
